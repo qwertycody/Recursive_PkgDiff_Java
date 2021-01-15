@@ -387,6 +387,56 @@ pkgdiff_recursive()
     done
 }
 
+generateReport_list_addRow()
+{
+    REPORT_SUBDIRECTORY="$1"
+    echo "<tr><td nowrap><a href=\"./$REPORT_SUBDIRECTORY/report.html\" target=\"reportFrame\">$REPORT_SUBDIRECTORY</a></td></tr>"
+}
+
+generateReport_list_header()
+{
+    echo "<html><body><h2>Reports</h2><table border=\"0\"><tbody>"
+}
+
+generateReport_list_footer()
+{
+    echo "</tbody></table></body></html>"
+}
+
+generateReport_index()
+{
+    echo "<html><head><title>WAR Comparison Recursive Report</title></head><frameset cols=\"20%,80%\"><frame src=\"./list.html\" name=\"listFrame\"></frame><frame src=\"WAR_COMPARISON/report.html\" name=\"reportFrame\"></frame></frameset></html>"
+}
+
+generateReport() {
+    REPORT_DIRECTORY="$1"
+
+    REPORT_LIST_FILE="$REPORT_DIRECTORY/list.html"
+    rm -f "$REPORT_LIST_FILE"
+    touch "$REPORT_LIST_FILE"
+
+    REPORT_INDEX_FILE="$REPORT_DIRECTORY/index.html"
+    rm -f "$REPORT_INDEX_FILE"
+    touch "$REPORT_INDEX_FILE"
+
+    echo "Report generating index at $REPORT_INDEX_FILE..."
+    generateReport_index >> "$REPORT_INDEX_FILE"
+
+    echo "Report generating list at $REPORT_LIST_FILE..."
+    generateReport_list_header >> "$REPORT_LIST_FILE"
+
+    cd "$REPORT_DIRECTORY"
+
+    for REPORT_SUBDIRECTORY in *; do
+        if [ -d "$REPORT_SUBDIRECTORY" ]; then
+            echo "Report - Directory detected - adding $REPORT_SUBDIRECTORY to $REPORT_LIST_FILE..."
+            generateReport_list_addRow "$REPORT_SUBDIRECTORY" >> "$REPORT_LIST_FILE"
+        fi
+    done
+
+    generateReport_list_footer >> "$REPORT_LIST_FILE"
+}
+
 main()
 {
     #Workaround to copy the war to a zip file extension
@@ -447,6 +497,9 @@ main()
 
     #Let the output catch up for a second so the log file doesn't look weird
     sleep 5
+
+    #Generate Customized Report with iFrames
+    generateReport "$VARIABLE_REPORT_DIRECTORY"
 
     cp -R "$VARIABLE_REPORT_DIRECTORY" "$VARIABLE_REPORT_DIRECTORY_TIMESTAMPED"
     cp "$VARIABLE_LOG_FILE" "$VARIABLE_REPORT_DIRECTORY_TIMESTAMPED/output.log"
