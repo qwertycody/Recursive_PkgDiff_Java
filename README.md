@@ -1,4 +1,4 @@
-Recursive PkgDiff for WAR Comparison
+# Recursive PkgDiff for WAR Comparison
 
 Prerequisites:
 - Java JDK 8 or higher installed
