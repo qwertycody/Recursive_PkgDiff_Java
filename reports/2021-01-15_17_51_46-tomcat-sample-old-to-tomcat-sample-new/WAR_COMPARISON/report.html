@@ -1,0 +1,255 @@
+<!-- changed:99.6;added:1;removed:1;moved:0;renamed:1;changed:1;tool_version:1.7.2 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="keywords" content="tomcat-sample, changes, report" />
+    <meta name="description" content="Changes report for the tomcat-sample package between old and new versions (hidden unchanged files)" />
+    <title>
+        tomcat-sample: old to new changes report
+    </title>
+    <style type="text/css">
+    body {
+    font-family:Arial, sans-serif;
+    background-color:White;
+    color:Black;
+}
+hr {
+    color:Black;
+    background-color:Black;
+    height:1px;
+    border:0;
+}
+h1 {
+    margin-bottom:0px;
+    padding-bottom:0px;
+    font-size:1.625em;
+}
+h2 {
+    margin-bottom:0px;
+    padding-bottom:0px;
+    font-size:1.25em;
+    white-space:nowrap;
+}
+table.summary {
+    border-collapse:collapse;
+    border:1px outset black;
+}
+table.summary th {
+    background-color:#eeeeee;
+    font-weight:bold;
+    text-align:left;
+    font-size:0.94em;
+    white-space:nowrap;
+    border:1px inset gray;
+    padding: 3px;
+}
+table.summary td {
+    text-align:right;
+    white-space:nowrap;
+    border:1px inset gray;
+    padding: 3px 5px 3px 5px;
+}
+table.summary td.left {
+    text-align:left;
+}
+table.summary th.left {
+    text-align:left;
+    font-weight:100;
+}
+table.summary td.f_path {
+    font-size:0.875em;
+    font-family:Consolas, 'DejaVu Sans Mono', 'Droid Sans Mono', Monaco, Monospace;
+    white-space:normal;
+    word-wrap:break-word;
+    max-width:57em;
+}
+table.summary td.value {
+    padding-left:10px;
+}
+td.passed, tr.passed {
+    background-color:#CCFFCC;
+}
+td.warning, tr.warning {
+    background-color:#F4F4AF;
+}
+td.renamed, tr.renamed {
+    background-color:#FFDAA3;
+}
+td.moved, tr.moved {
+    background-color:#FFDAA3;
+}
+td.failed, tr.failed {
+    background-color:#FFC3CE;
+}
+td.new, tr.new {
+    background-color:#C6DEFF;
+}
+a.default {
+    color:#336699;
+}
+div.p_list {
+    padding-left:10px;
+    color:#333333;
+    font-size:0.94em;
+}
+.top_ref {
+    font-size:0.69em;
+}
+.footer {
+    font-size:0.75em;
+}
+
+    </style>
+    <script type="text/javascript" language="JavaScript">
+    <!--
+    function sort(el, status)
+{ 
+    var col_sort = el.innerHTML;
+    var tr = el.parentNode;
+    var table = tr.parentNode;
+    var td, col_sort_num;
+    for (var i=0; (td = tr.getElementsByTagName('th').item(i)); i++)
+    {
+        if(td.innerHTML == col_sort)
+        {
+            col_sort_num = i;
+            if(td.prevsort == 'y') {
+                el.up = Number(!el.up);
+            }
+            else if(td.prevsort == 'n') {
+                td.prevsort = 'y';
+                el.up = 0;
+            }
+            else
+            {
+                if(col_sort_num==0)
+                { // already sorted
+                    td.prevsort = 'n';
+                    el.up = 1;
+                }
+                else if(col_sort_num==2)
+                { // delta
+                    td.prevsort = 'n';
+                    el.up = 1;
+                }
+                else
+                {
+                    td.prevsort = 'y';
+                    el.up = 0;
+                }
+            }
+        }
+        else
+        {
+            if(td.prevsort == 'y') {
+                td.prevsort = 'n';
+            }
+        }
+    }
+    
+    var a = new Array();
+    for(var i=1; i < table.rows.length; i++)
+    {
+        var cols = table.rows[i].getElementsByTagName('td');
+        if(cols.item(status)==null)
+        { // double status
+            a[i-2][2] = table.rows[i];
+        }
+        else
+        {
+            a[i-1] = new Array();
+            var indent = cols.item(col_sort_num).innerHTML;
+            if(indent=='') indent='0';
+            if(indent.substr(indent.length-1, 1)=="%")
+            { // delta
+                indent = indent.substr(0, indent.length-1)*100;
+            }
+            a[i-1][0] = indent;
+            a[i-1][1] = table.rows[i];
+            a[i-1][2] = null;
+        }
+    }
+    
+    // sort table
+    a.sort(sort_array);
+    if(el.up) a.reverse();
+    
+    // draw table
+    for(var i in a)
+    {
+        table.appendChild(a[i][1]);
+        if(a[i][2]!=null) {
+            table.appendChild(a[i][2]);
+        }
+    }
+}
+
+function sort_array(a,b)
+{
+    if(a[0] == b[0]) return 0;
+    if(a[0] > b[0]) return 1;
+    return -1;
+}
+    -->
+    </script>
+    </head>
+<body>
+<div><a name='Top'></a>
+<h1>Changes report for the <span style='color:Blue;'>tomcat-sample</span> package between <span style='color:Red;'>old</span> and <span style='color:Red;'>new</span> versions (hidden unchanged files)</h1>
+<br/><table class='summary'>
+    <tr><td class='new' width='80px'>added</td><td class='passed' width='80px'>unchanged</td></tr>
+    <tr><td class='warning'>changed</td><td class='failed'>removed</td></tr></table>
+<h2>Test Info</h2><hr/>
+<table class='summary'>
+<tr><th class='left'>Package Name</th><td>tomcat-sample</td></tr>
+<tr><th class='left'>Package Format</th><td>ZIP</td></tr>
+<tr><th class='left'>Version #1</th><td>old</td></tr>
+<tr><th class='left'>Version #2</th><td>new</td></tr>
+</table>
+<h2>Test Results</h2><hr/>
+<table class='summary'>
+<tr><th class='left'>Total Packages</th><td><a href='#Packages' style='color:Blue;'>2</a></td></tr>
+<tr><th class='left'>Total Files</th><td><a href='#Files' style='color:Blue;'>14</a></td></tr>
+<tr><th class='left'>Verdict</th><td><span style='color:Red;'><b>Changed<br/>(99.6%)</b></span></td></tr>
+</table>
+<a name='Deps'></a>
+<a name='Files'></a><h2>Changes In Files</h2><hr/>
+<table class='summary'>
+<tr><th>File Type</th><th>Total</th><th>Added</th><th>Removed</th><th>Changed</th></tr>
+<tr>
+<td class='left'>Archive</td>
+<td><a href='#Archives' style='color:Blue;'>2</a></td>
+<td class='new'><a href='#Archives' style='color:Blue;'>1</a></td>
+<td class='failed'><a href='#Archives' style='color:Blue;'>1</a></td>
+<td>0</td>
+</tr>
+</table>
+<a name='Archives'></a>
+<h2>Archives (2)</h2><hr/>
+<table class='summary'>
+<tr>
+<th title='sort' onclick='javascript:sort(this, 1)' style='cursor:pointer'>Name</th>
+<th title='sort' onclick='javascript:sort(this, 1)' style='cursor:pointer'>Status</th>
+<th title='sort' onclick='javascript:sort(this, 1)' style='cursor:pointer'>Delta</th>
+<th>Visual<br/>Diff</th>
+</tr>
+<tr>
+<td class='left f_path failed'>WEB-INF/lib/joda-time-2.10.3.jar</td>
+<td class='renamed' rowspan='2'>renamed</td>
+<td class='value' rowspan='2'>0.2%</td>
+<td rowspan='2'></td>
+</tr>
+<tr><td class='left f_path  new'>WEB-INF/lib/joda-time-2.10.9.jar</td></tr>
+</table>
+<a name='Packages'></a>
+<h2>Packages (2)</h2><hr/>
+<div class='p_list'>
+tomcat-sample-new.zip<br/>
+tomcat-sample-old.zip<br/>
+</div>
+<br/><a class='top_ref' href='#Top'>to the top</a><br/>
+</div>
+<br/><br/><br/><hr/>
+<div class='footer' style='width:100%;' align='right'><i>Generated by <a href='http://lvc.github.com/pkgdiff/'>PkgDiff</a> 1.7.2 &#160;</i></div><br/>
+</body></html>

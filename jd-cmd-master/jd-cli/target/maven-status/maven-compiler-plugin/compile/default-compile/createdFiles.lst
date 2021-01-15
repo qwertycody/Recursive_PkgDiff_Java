@@ -1,0 +1,5 @@
+jd\cli\LogLevelConverter.class
+jd\cli\CLIArguments.class
+jd\cli\ExtCommander.class
+jd\cli\InputOutputPair.class
+jd\cli\Main.class
