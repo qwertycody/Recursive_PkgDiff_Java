@@ -74,52 +74,20 @@ NEWER_FILE_NAME="${NEWER_FILE_NAME%.*}"
 OLDER_ZIP_FILE="$VARIABLE_TEMP/$OLDER_FILE_NAME.zip"
 NEWER_ZIP_FILE="$VARIABLE_TEMP/$NEWER_FILE_NAME.zip"
 
+#Temp working copy so we don't touch the originals
+OLDER_WAR_FILE_TEMP="$VARIABLE_TEMP/$OLDER_FILE_NAME.war"
+NEWER_WAR_FILE_TEMP="$VARIABLE_TEMP/$NEWER_FILE_NAME.war"
+
 #Timestamps for Report 
 VARIABLE_TIMESTAMP=$(date "+%Y-%m-%d_%H_%M_%S")
 VARIABLE_REPORT_NAME="$OLDER_FILE_NAME-to-$NEWER_FILE_NAME"
 VARIABLE_REPORT_NAME_TIMESTAMPED="$VARIABLE_TIMESTAMP-$OLDER_FILE_NAME-to-$NEWER_FILE_NAME"
 
-#Workaround to copy the war to a zip file extension
-cp "$OLDER_WAR_FILE" "$OLDER_ZIP_FILE"
-cp "$NEWER_WAR_FILE" "$NEWER_ZIP_FILE"
-
-#Compare File Sizes
-# ls -al "$OLDER_WAR_FILE"
-# ls -al "$NEWER_WAR_FILE"
-
-#Sample
-#pkgdiff OLD.jar NEW.jar
-
-#Setup the Reports Directory
-VARIABLE_REPORT_DIRECTORY="$SCRIPT_DIRECTORY/reports/$VARIABLE_REPORT_NAME"
-VARIABLE_REPORT_DIRECTORY_TIMESTAMPED="$SCRIPT_DIRECTORY/reports/$VARIABLE_REPORT_NAME_TIMESTAMPED"
-
-if [ "$VARIABLE_WIPE_CURRENT_REPORT_DIRECTORY" == "TRUE" ]; then
-    rm -Rf "$VARIABLE_REPORT_DIRECTORY"
-fi
-
-mkdir -p "$VARIABLE_REPORT_DIRECTORY"
-
-VARIABLE_LOG_FILE="$SCRIPT_DIRECTORY/output.log"
+#Log File
+export VARIABLE_LOG_FILE="$SCRIPT_DIRECTORY/output.log"
 
 if [ ! -f "$VARIABLE_LOG_FILE" ]; then
     touch "$VARIABLE_LOG_FILE"
-fi
-
-#Setup the WAR Comparison Directory for Report
-VARIABLE_REPORT_WAR_COMPARISON_DIRECTORY="$VARIABLE_REPORT_DIRECTORY/WAR_COMPARISON"
-
-if [ "$VARIABLE_WIPE_CURRENT_REPORT_DIRECTORY" == "TRUE" ]; then
-    rm -Rf "$VARIABLE_REPORT_WAR_COMPARISON_DIRECTORY"
-fi
-
-mkdir -p "$VARIABLE_REPORT_WAR_COMPARISON_DIRECTORY"
-
-#Report file for WAR Comparison
-VARIABLE_REPORT_WAR_COMPARISON_HTML_FILE="$VARIABLE_REPORT_WAR_COMPARISON_DIRECTORY/report.html"
-
-if [ "$VARIABLE_RUN_PKGDIFF" == "TRUE" ]; then
-    pkgdiff -report-path "$VARIABLE_REPORT_WAR_COMPARISON_HTML_FILE" -hide-unchanged "$OLDER_ZIP_FILE" "$NEWER_ZIP_FILE"
 fi
 
 #Declare Recursive Unzip Function
@@ -161,15 +129,17 @@ searchDirectory()
     done
 }
 
-export -f performConditionalActionOnFile
-export -f searchDirectory
-
-#Expand the WAR Files and Jar Files
-searchDirectory "$OLDER_ZIP_FILE"
-searchDirectory "$NEWER_ZIP_FILE"
 
 decompileArtifact()
 {
+    SOURCE_BINARY_FILE="$1"
+
+    if [ ! -n "$2" ]; then
+        OPTIONAL_DESTINATION_BINARY_FOR_DECOMPILED_SOURCE="$SOURCE_BINARY_FILE"
+    else
+        OPTIONAL_DESTINATION_BINARY_FOR_DECOMPILED_SOURCE="$2"
+    fi
+
     if [ "$VARIABLE_ENABLE_DECOMPILER" == "TRUE" ]; then
 
         if [ ! -n "$JAVA_HOME" ]; then
@@ -180,11 +150,11 @@ decompileArtifact()
         VARIABLE_JAR_PATH="$JAVA_HOME/bin/jar"
         VARIABLE_JAVA_DECOMPILER_JAR="$SCRIPT_DIRECTORY/jd-cmd-master/jd-cli/target/jd-cli.jar"
 
-        FILE_NAME=$(basename -- "$1")
+        FILE_NAME=$(basename -- "$SOURCE_BINARY_FILE")
         FILE_EXTENSION="${FILE_NAME##*.}"
         FILE_NAME="${FILE_NAME%.*}"
  
-        ARCHIVE_DIRECTORY=$(dirname "$1")
+        ARCHIVE_DIRECTORY=$(dirname "$SOURCE_BINARY_FILE")
         ARCHIVE_OUTPUT_DIRECTORY="$ARCHIVE_DIRECTORY/$FILE_NAME"
         ARCHIVE_OUTPUT_DIRECTORY_SRC="$ARCHIVE_OUTPUT_DIRECTORY/src"
 
@@ -197,14 +167,25 @@ decompileArtifact()
         for fileType in "${JAVA_CLASS_TYPES[@]}"
         do
             if [[ $1 =~ \.$fileType ]]; then
-                debugString "JAVA_CLASS $1"
-                "$VARIABLE_JAVA_PATH" -jar "$VARIABLE_JAVA_DECOMPILER_JAR" -dm -rn -n -od "$ARCHIVE_OUTPUT_DIRECTORY_SRC" "$1" >> "$VARIABLE_LOG_FILE" 2>&1
-                debugString "Decompiled $1 to $ARCHIVE_OUTPUT_DIRECTORY_SRC"
+                debugString "JAVA_CLASS $SOURCE_BINARY_FILE"
+                "$VARIABLE_JAVA_PATH" -jar "$VARIABLE_JAVA_DECOMPILER_JAR" -dm -rn -n -od "$ARCHIVE_OUTPUT_DIRECTORY_SRC" "$SOURCE_BINARY_FILE" >> "$VARIABLE_LOG_FILE" 2>&1
+                debugString "Decompiled $SOURCE_BINARY_FILE to $ARCHIVE_OUTPUT_DIRECTORY_SRC"
 
+                #Change Directory to src directory for filtering
+                cd "$ARCHIVE_OUTPUT_DIRECTORY_SRC"
+
+                #Remove any files that are not .java files in the src
+                find . -type f ! -name '*.java' -delete
+                
+                #Remove any empty directories
+                find . -empty -type d -delete
+
+                #Change Directory to parent dir above src for filtering
                 cd "$ARCHIVE_OUTPUT_DIRECTORY"
-                "$VARIABLE_JAR_PATH" -uf "$1" "./src"  
 
-                debugString "Added Source from $ARCHIVE_OUTPUT_DIRECTORY_SRC to $1"
+                "$VARIABLE_JAR_PATH" -uf "$OPTIONAL_DESTINATION_BINARY_FOR_DECOMPILED_SOURCE" "./src"  
+
+                debugString "Added Source from $ARCHIVE_OUTPUT_DIRECTORY_SRC to $OPTIONAL_DESTINATION_BINARY_FOR_DECOMPILED_SOURCE"
 
                 return
             fi
@@ -214,14 +195,25 @@ decompileArtifact()
         for fileType in "${JAVA_ARCHIVE_TYPES[@]}"
         do
             if [[ $1 =~ \.$fileType ]]; then
-                debugString "JAVA_ARCHIVE $1"
-                "$VARIABLE_JAVA_PATH" -jar "$VARIABLE_JAVA_DECOMPILER_JAR" -dm -rn -n -od "$ARCHIVE_OUTPUT_DIRECTORY_SRC" "$1" >> "$VARIABLE_LOG_FILE" 2>&1
-                debugString "Decompiled $1 to $ARCHIVE_OUTPUT_DIRECTORY_SRC"
+                debugString "JAVA_ARCHIVE $SOURCE_BINARY_FILE"
+                "$VARIABLE_JAVA_PATH" -jar "$VARIABLE_JAVA_DECOMPILER_JAR" -dm -rn -n -od "$ARCHIVE_OUTPUT_DIRECTORY_SRC" "$SOURCE_BINARY_FILE" >> "$VARIABLE_LOG_FILE" 2>&1
+                debugString "Decompiled $SOURCE_BINARY_FILE to $ARCHIVE_OUTPUT_DIRECTORY_SRC"
 
+                #Change Directory to src directory for filtering
+                cd "$ARCHIVE_OUTPUT_DIRECTORY_SRC"
+
+                #Remove any files that are not .java files in the src
+                find . -type f ! -name '*.java' -delete
+                
+                #Remove any empty directories
+                find . -empty -type d -delete
+
+                #Change Directory to parent dir above src for filtering
                 cd "$ARCHIVE_OUTPUT_DIRECTORY"
-                "$VARIABLE_JAR_PATH" -uf "$1" "./src"  
 
-                debugString "Added Source from $ARCHIVE_OUTPUT_DIRECTORY_SRC to $1"
+                "$VARIABLE_JAR_PATH" -uf "$OPTIONAL_DESTINATION_BINARY_FOR_DECOMPILED_SOURCE" "./src"  
+
+                debugString "Added Source from $ARCHIVE_OUTPUT_DIRECTORY_SRC to $OPTIONAL_DESTINATION_BINARY_FOR_DECOMPILED_SOURCE"
                 return 
             fi
         done
@@ -236,8 +228,17 @@ removeHyphenDotAndVersionNumberFromJar()
     #Remove Hyphens from String
     CORRECTED_FILENAME=$(printf '%s' "$CORRECTED_FILENAME" | sed 's/-//g')
 
+    #Remove Underscore from String
+    CORRECTED_FILENAME=$(printf '%s' "$CORRECTED_FILENAME" | sed 's/_//g')
+
     #Remove Dots from String
     CORRECTED_FILENAME=$(printf '%s' "$CORRECTED_FILENAME" | sed 's/\.//g')
+
+    #Remove Build from String
+    CORRECTED_FILENAME=$(printf '%s' "$CORRECTED_FILENAME" | sed 's/Build//g')
+
+    #Remove SNAPSHOT from String
+    CORRECTED_FILENAME=$(printf '%s' "$CORRECTED_FILENAME" | sed 's/SNAPSHOT//g')
 
     echo "$CORRECTED_FILENAME"
 }
@@ -358,12 +359,23 @@ pkgdiff_recursive()
                         #Report file for WAR Comparison
                         VARIABLE_REPORT_JAR_COMPARISON_HTML_FILE="$VARIABLE_REPORT_JAR_COMPARISON_DIRECTORY/report.html"
 
-                        #Decompile the code and add it back into the jar for pkgdiff in next step
-                        decompileArtifact "$OLDER_JAR_FILE"
-                        decompileArtifact "$NEWER_JAR_FILE"
+                        debugString "Comparing $OLDER_JAR_FILE and $NEWER_JAR_FILE to see if pkgdiff/decompile can be skipped..."
 
-                        if [ "$VARIABLE_RUN_PKGDIFF" == "TRUE" ]; then
-                            pkgdiff -report-path "$VARIABLE_REPORT_JAR_COMPARISON_HTML_FILE" -hide-unchanged "$OLDER_JAR_FILE" "$NEWER_JAR_FILE"
+                        diff -q "$OLDER_JAR_FILE" "$NEWER_JAR_FILE" 1>/dev/null
+
+                        if [[ $? == "0" ]]
+                        then
+                            debugString "Diff - Files are the same - Not Running pkgDiff/decompile..."
+                        else
+                            debugString "Diff - Files are not the same - running analysis..."
+                    
+                            #Decompile the code and add it back into the jar for pkgdiff in next step
+                            decompileArtifact "$OLDER_JAR_FILE"
+                            decompileArtifact "$NEWER_JAR_FILE"
+
+                            if [ "$VARIABLE_RUN_PKGDIFF" == "TRUE" ]; then
+                                pkgdiff -report-path "$VARIABLE_REPORT_JAR_COMPARISON_HTML_FILE" -hide-unchanged "$OLDER_JAR_FILE" "$NEWER_JAR_FILE"
+                            fi
                         fi
 
                         break
@@ -374,18 +386,75 @@ pkgdiff_recursive()
     done
 }
 
-if [ "$VARIABLE_RUN_PKGDIFF_RECURSIVE" == "TRUE" ]; then
-    pkgdiff_recursive "$OLDER_ZIP_FILE" "$NEWER_ZIP_FILE"
-fi
+main()
+{
+    #Workaround to copy the war to a zip file extension
+    cp "$OLDER_WAR_FILE" "$OLDER_ZIP_FILE"
+    cp "$NEWER_WAR_FILE" "$NEWER_ZIP_FILE"
 
-#Let the output catch up for a second so the log file doesn't look weird
-sleep 5
+    #Create working copy temporarily
+    cp "$OLDER_WAR_FILE" "$OLDER_WAR_FILE_TEMP"
+    cp "$NEWER_WAR_FILE" "$NEWER_WAR_FILE_TEMP"
 
-cp -R "$VARIABLE_REPORT_DIRECTORY" "$VARIABLE_REPORT_DIRECTORY_TIMESTAMPED"
-cp "$VARIABLE_LOG_FILE" "$VARIABLE_REPORT_DIRECTORY_TIMESTAMPED/output.log"
+    #Decompile the code and add it back into the zip for pkgdiff in next step
+    decompileArtifact "$OLDER_WAR_FILE_TEMP" "$OLDER_ZIP_FILE"
+    decompileArtifact "$NEWER_WAR_FILE_TEMP" "$NEWER_ZIP_FILE"
 
-#Compress Reports to Zip
-cd "$VARIABLE_REPORT_DIRECTORY_TIMESTAMPED"
-zip -r "../$VARIABLE_REPORT_NAME_TIMESTAMPED.zip" *
+    #Compare File Sizes
+    # ls -al "$OLDER_WAR_FILE"
+    # ls -al "$NEWER_WAR_FILE"
 
-echo "pkgdiff_recursive.sh has finished running - you can ctrl+c or close the window now..."
+    #Sample
+    #pkgdiff OLD.jar NEW.jar
+
+    #Setup the Reports Directory
+    export VARIABLE_REPORT_DIRECTORY="$SCRIPT_DIRECTORY/reports/$VARIABLE_REPORT_NAME"
+    export VARIABLE_REPORT_DIRECTORY_TIMESTAMPED="$SCRIPT_DIRECTORY/reports/$VARIABLE_REPORT_NAME_TIMESTAMPED"
+
+    if [ "$VARIABLE_WIPE_CURRENT_REPORT_DIRECTORY" == "TRUE" ]; then
+        rm -Rf "$VARIABLE_REPORT_DIRECTORY"
+    fi
+
+    mkdir -p "$VARIABLE_REPORT_DIRECTORY"
+
+    #Setup the WAR Comparison Directory for Report
+    export VARIABLE_REPORT_WAR_COMPARISON_DIRECTORY="$VARIABLE_REPORT_DIRECTORY/WAR_COMPARISON"
+
+    if [ "$VARIABLE_WIPE_CURRENT_REPORT_DIRECTORY" == "TRUE" ]; then
+        rm -Rf "$VARIABLE_REPORT_WAR_COMPARISON_DIRECTORY"
+    fi
+
+    mkdir -p "$VARIABLE_REPORT_WAR_COMPARISON_DIRECTORY"
+
+    #Report file for WAR Comparison
+    export VARIABLE_REPORT_WAR_COMPARISON_HTML_FILE="$VARIABLE_REPORT_WAR_COMPARISON_DIRECTORY/report.html"
+
+    if [ "$VARIABLE_RUN_PKGDIFF" == "TRUE" ]; then
+        pkgdiff -report-path "$VARIABLE_REPORT_WAR_COMPARISON_HTML_FILE" -hide-unchanged "$OLDER_ZIP_FILE" "$NEWER_ZIP_FILE"
+    fi
+    
+    export -f performConditionalActionOnFile
+    export -f searchDirectory
+
+    #Expand the WAR Files and Jar Files
+    searchDirectory "$OLDER_ZIP_FILE"
+    searchDirectory "$NEWER_ZIP_FILE"
+
+    if [ "$VARIABLE_RUN_PKGDIFF_RECURSIVE" == "TRUE" ]; then
+        pkgdiff_recursive "$OLDER_ZIP_FILE" "$NEWER_ZIP_FILE"
+    fi
+
+    #Let the output catch up for a second so the log file doesn't look weird
+    sleep 5
+
+    cp -R "$VARIABLE_REPORT_DIRECTORY" "$VARIABLE_REPORT_DIRECTORY_TIMESTAMPED"
+    cp "$VARIABLE_LOG_FILE" "$VARIABLE_REPORT_DIRECTORY_TIMESTAMPED/output.log"
+
+    #Compress Reports to Zip
+    cd "$VARIABLE_REPORT_DIRECTORY_TIMESTAMPED"
+    zip -r "../$VARIABLE_REPORT_NAME_TIMESTAMPED.zip" *
+
+    echo "pkgdiff_recursive.sh has finished running - you can ctrl+c or close the window now..."
+}
+
+main
