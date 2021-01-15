@@ -347,18 +347,7 @@ pkgdiff_recursive()
                         echo "Newer Jar File Deversioned - $NEWER_JAR_FILE_DEVERSIONED"
                         echo ""
 
-                        #Setup the JAR Comparison Directory for Report
-                        VARIABLE_REPORT_JAR_COMPARISON_DIRECTORY="$VARIABLE_REPORT_DIRECTORY/$OLDER_JAR_FILE_NAME-to-$NEWER_JAR_FILE_NAME"
                         
-                        if [ "$VARIABLE_WIPE_CURRENT_REPORT_DIRECTORY" == "TRUE" ]; then
-                            rm -Rf "$VARIABLE_REPORT_JAR_COMPARISON_DIRECTORY"
-                        fi
-
-                        mkdir -p "$VARIABLE_REPORT_JAR_COMPARISON_DIRECTORY"
-
-                        #Report file for WAR Comparison
-                        VARIABLE_REPORT_JAR_COMPARISON_HTML_FILE="$VARIABLE_REPORT_JAR_COMPARISON_DIRECTORY/report.html"
-
                         debugString "Comparing $OLDER_JAR_FILE and $NEWER_JAR_FILE to see if pkgdiff/decompile can be skipped..."
 
                         diff -q "$OLDER_JAR_FILE" "$NEWER_JAR_FILE" 1>/dev/null
@@ -369,6 +358,18 @@ pkgdiff_recursive()
                         else
                             debugString "Diff - Files are not the same - running analysis..."
                     
+                            #Setup the JAR Comparison Directory for Report
+                            VARIABLE_REPORT_JAR_COMPARISON_DIRECTORY="$VARIABLE_REPORT_DIRECTORY/$OLDER_JAR_FILE_NAME-to-$NEWER_JAR_FILE_NAME"
+                            
+                            if [ "$VARIABLE_WIPE_CURRENT_REPORT_DIRECTORY" == "TRUE" ]; then
+                                rm -Rf "$VARIABLE_REPORT_JAR_COMPARISON_DIRECTORY"
+                            fi
+
+                            mkdir -p "$VARIABLE_REPORT_JAR_COMPARISON_DIRECTORY"
+
+                            #Report file for WAR Comparison
+                            VARIABLE_REPORT_JAR_COMPARISON_HTML_FILE="$VARIABLE_REPORT_JAR_COMPARISON_DIRECTORY/report.html"
+
                             #Decompile the code and add it back into the jar for pkgdiff in next step
                             decompileArtifact "$OLDER_JAR_FILE"
                             decompileArtifact "$NEWER_JAR_FILE"
